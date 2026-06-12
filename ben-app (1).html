@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BEN — Bridging Events to New Patients</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#0A5F6B;--teal-light:#E0F2F4;--teal-mid:#1A8A9A;
+  --coral:#E8634A;--coral-light:#FDEEE9;
+  --white:#FFFFFF;--surface:#F7F9F8;--surface-2:#EEF2F1;
+  --text-primary:#0D1F22;--text-secondary:#4A6568;--text-muted:#8AA5A8;
+  --border:rgba(10,95,107,0.15);--border-strong:rgba(10,95,107,0.3);
+  --success:#1A8A5A;--success-light:#E0F5EC;
+  --r-sm:8px;--r-md:12px;--r-lg:18px;--r-xl:24px;
+}
+html,body{height:100%;background:var(--surface);font-family:'Inter',sans-serif;color:var(--text-primary);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--surface);position:relative}
+
+/* Header */
+.header{background:var(--teal);padding:16px 20px 14px;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.logo{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:white;letter-spacing:-0.5px}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.5);font-weight:400;letter-spacing:0.3px;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.7);cursor:pointer}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);transition:background 0.3s}
+.sync-dot.ok{background:#4ADE80}.sync-dot.syncing{background:#FCD34D;animation:pulse 1s infinite}.sync-dot.error{background:#F87171}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.event-badge{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:5px 12px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.event-badge:active{background:rgba(255,255,255,0.2)}
+.tabs{display:flex;background:rgba(255,255,255,0.08);border-radius:var(--r-md);padding:3px;gap:2px}
+.tab{flex:1;padding:7px 4px;border:none;background:transparent;color:rgba(255,255,255,0.6);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;border-radius:10px;cursor:pointer;transition:all 0.18s;display:flex;align-items:center;justify-content:center;gap:4px}
+.tab svg{width:14px;height:14px;flex-shrink:0}
+.tab.active{background:white;color:var(--teal)}
+
+/* Content */
+.content{flex:1;padding:20px 16px 100px;overflow-y:auto}
+.content::-webkit-scrollbar{display:none}
+.screen{display:none}.screen.active{display:block}
+.section-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.section-sub{font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.5}
+
+/* Form */
+.form-card{background:var(--white);border-radius:var(--r-lg);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.form-card-title{font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:16px}
+.field{margin-bottom:14px}.field:last-child{margin-bottom:0}
+label{display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px}
+input[type="text"],input[type="tel"],input[type="date"],select{width:100%;height:46px;border:1.5px solid var(--border-strong);border-radius:var(--r-sm);padding:0 14px;font-family:'Inter',sans-serif;font-size:15px;color:var(--text-primary);background:var(--surface);outline:none;transition:border-color 0.15s,background 0.15s;appearance:none;-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--teal);background:white}
+input::placeholder{color:var(--text-muted)}
+.gender-row{display:flex;gap:8px}
+.gender-btn{flex:1;height:42px;border:1.5px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);font-family:'Inter',sans-serif;font-size:14px;color:var(--text-secondary);cursor:pointer;transition:all 0.15s}
+.gender-btn.selected{border-color:var(--teal);background:var(--teal-light);color:var(--teal);font-weight:500}
+.btn-primary{width:100%;height:52px;background:var(--teal);color:white;border:none;border-radius:var(--r-md);font-family:'Sora',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.1s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:active{transform:scale(0.98);opacity:0.9}
+.btn-secondary{width:100%;height:46px;background:var(--surface-2);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--r-md);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px}
+.btn-secondary:active{opacity:0.7}
+
+/* Gift Card */
+.gift-card{width:100%;aspect-ratio:1.586;background:linear-gradient(135deg,#0A5F6B 0%,#0E7D8E 45%,#1AACBF 100%);border-radius:18px;padding:22px 24px;color:white;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;margin-bottom:20px}
+.gift-card::before{content:'';position:absolute;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,0.05);right:-80px;top:-80px}
+.gift-card::after{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.04);left:-40px;bottom:-60px}
+.gc-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.gc-brand{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.2px}
+.gc-brand-sub{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;opacity:0.55;margin-top:1px}
+.gc-chip{width:32px;height:24px;border-radius:4px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25)}
+.gc-middle{position:relative;z-index:1}
+.gc-name{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;margin-bottom:2px;letter-spacing:-0.3px}
+.gc-meta{font-size:11px;opacity:0.65}
+.gc-bottom{display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1}
+.gc-id-label{font-size:9px;opacity:0.55;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px}
+.gc-id{font-family:'Sora',sans-serif;font-size:13px;font-weight:600;letter-spacing:1.5px}
+.gc-event-wrap{text-align:right}
+.gc-event-label{font-size:9px;opacity:0.55;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:2px}
+.gc-event{font-size:11px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gc-icon{position:absolute;right:20px;top:50%;transform:translateY(-50%);opacity:0.06;z-index:0}
+.gc-icon svg{width:90px;height:90px}
+
+/* QR section */
+.qr-section{background:white;border-radius:var(--r-lg);border:1px solid var(--border);padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:14px}
+.qr-section p{font-size:13px;color:var(--text-secondary);text-align:center;line-height:1.5}
+#qrcode canvas,#qrcode img{border-radius:8px}
+.download-btns{display:flex;gap:10px;margin-bottom:16px}
+.dl-btn{flex:1;height:48px;border-radius:var(--r-md);border:1.5px solid var(--border-strong);background:white;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--text-primary);cursor:pointer;transition:background 0.15s}
+.dl-btn:active{background:var(--surface)}
+.dl-btn.primary-dl{background:var(--teal);color:white;border-color:var(--teal)}
+
+/* Scanner */
+.scanner-box{background:#0D1F22;border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;position:relative;min-height:280px;display:flex;align-items:center;justify-content:center}
+#scanner-video{width:100%;display:block;border-radius:var(--r-lg)}
+.scan-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;border:2px solid rgba(255,255,255,0.4);border-radius:12px;pointer-events:none}
+.scan-corner{position:absolute;width:28px;height:28px;border-color:var(--coral);border-style:solid}
+.sc-tl{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:10px 0 0 0}
+.sc-tr{top:-2px;right:-2px;border-width:3px 3px 0 0;border-radius:0 10px 0 0}
+.sc-bl{bottom:-2px;left:-2px;border-width:0 0 3px 3px;border-radius:0 0 0 10px}
+.sc-br{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 10px 0}
+.scan-placeholder{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 24px;color:rgba(255,255,255,0.5);text-align:center}
+.scan-placeholder svg{width:48px;height:48px;opacity:0.4}
+.scan-placeholder p{font-size:14px;line-height:1.5}
+.patient-result{background:white;border-radius:var(--r-lg);border:2px solid var(--success);padding:20px;margin-bottom:16px;display:none}
+.patient-result.visible{display:block}
+.result-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.result-avatar{width:48px;height:48px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:17px;font-weight:700;color:var(--teal);flex-shrink:0}
+.result-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:700}
+.result-meta{font-size:13px;color:var(--text-secondary);margin-top:2px}
+.result-row{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-top:1px solid var(--border);color:var(--text-secondary)}
+.result-row span:last-child{color:var(--text-primary);font-weight:500}
+.success-pill{display:inline-flex;align-items:center;gap:6px;background:var(--success-light);color:var(--success);font-size:13px;font-weight:600;border-radius:20px;padding:6px 14px;margin-bottom:16px}
+.not-found-box{background:white;border-radius:var(--r-lg);border:2px solid #E24B4A;padding:20px;text-align:center;margin-bottom:16px;display:none}
+.not-found-box.visible{display:block}
+.not-found-box p{font-size:14px;color:#A32D2D;margin-top:8px;line-height:1.5}
+
+/* Dashboard */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:white;border-radius:var(--r-md);border:1px solid var(--border);padding:16px}
+.stat-label{font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.stat-value{font-family:'Sora',sans-serif;font-size:28px;font-weight:700;color:var(--text-primary)}
+.stat-value.teal{color:var(--teal)}.stat-value.coral{color:var(--coral)}
+.stat-sub{font-size:11px;color:var(--text-muted);margin-top:4px}
+.conversion-bar-wrap{background:white;border-radius:var(--r-lg);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.bar-label{display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:10px}
+.bar-label strong{color:var(--text-primary)}
+.bar-track{height:10px;background:var(--surface-2);border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;background:var(--teal);border-radius:10px;transition:width 0.8s ease}
+.bar-fill.coral{background:var(--coral)}
+.event-breakdown{background:white;border-radius:var(--r-lg);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.eb-title{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px}
+.eb-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.eb-row:last-child{margin-bottom:0}
+.eb-name{font-size:13px;color:var(--text-primary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eb-nums{font-size:12px;color:var(--text-muted);white-space:nowrap}
+.eb-track{height:6px;background:var(--surface-2);border-radius:6px;overflow:hidden;width:72px;flex-shrink:0}
+.eb-fill{height:100%;background:var(--teal);border-radius:6px}
+.patient-list{margin-bottom:16px}
+.patient-item{background:white;border-radius:var(--r-md);border:1px solid var(--border);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.patient-item:active{background:var(--teal-light)}
+.p-avatar{width:38px;height:38px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--teal);flex-shrink:0}
+.p-avatar.returned{background:var(--success-light);color:var(--success)}
+.p-name{font-size:14px;font-weight:500}.p-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.p-badge{margin-left:auto;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;flex-shrink:0}
+.p-badge.registered{background:var(--teal-light);color:var(--teal)}
+.p-badge.returned{background:var(--success-light);color:var(--success)}
+
+/* Modals */
+.modal-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center;min-height:600px}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:white;border-radius:var(--r-xl) var(--r-xl) 0 0;padding:24px 20px 40px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--surface-2);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text-secondary);margin-bottom:20px}
+.event-option{display:flex;align-items:center;gap:14px;padding:14px;border-radius:var(--r-md);border:1.5px solid var(--border);margin-bottom:10px;cursor:pointer;transition:all 0.15s}
+.event-option.selected{border-color:var(--teal);background:var(--teal-light)}
+.event-icon{width:40px;height:40px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.event-icon svg{width:20px;height:20px;color:var(--teal)}
+.event-opt-name{font-size:14px;font-weight:500}.event-opt-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.event-new-field{display:flex;gap:8px;margin-top:16px;align-items:center}
+.event-new-field input{flex:1;margin:0;height:42px}
+
+/* Settings */
+.settings-section{background:white;border-radius:var(--r-lg);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.settings-section-title{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:16px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--border);font-size:14px;color:var(--text-primary);cursor:pointer}
+.settings-row:first-of-type{border-top:none;padding-top:0}
+.settings-row-right{font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.settings-row-right svg{width:14px;height:14px}
+.setup-info{background:var(--teal-light);border-radius:var(--r-md);padding:14px;font-size:12px;color:var(--teal);line-height:1.7;margin-bottom:16px}
+.setup-field{margin-bottom:14px}
+.setup-field label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px}
+
+/* Manual lookup */
+.manual-lookup{background:white;border-radius:var(--r-lg);border:1px solid var(--border);padding:18px;margin-bottom:16px;margin-top:16px}
+.manual-lookup-title{font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:10px}
+.manual-row{display:flex;gap:8px}
+.manual-row input{flex:1;margin:0;height:42px;font-size:14px}
+.manual-row button{height:42px;padding:0 16px;background:var(--teal);color:white;border:none;border-radius:var(--r-sm);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap}
+.manual-row button:active{opacity:0.85}
+
+/* Search */
+.search-wrap{position:relative;margin-bottom:14px}
+.search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-muted);pointer-events:none}
+.search-wrap input{padding-left:40px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:0.3}
+.empty-state p{font-size:14px;line-height:1.5}
+
+/* Script code */
+.code-block{background:#F0F4F3;border-radius:10px;padding:14px;font-family:monospace;font-size:11px;color:#0D1F22;line-height:1.7;overflow-x:auto;white-space:pre;margin-bottom:16px;max-height:300px;overflow-y:auto}
+
+/* Toast */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text-primary);color:white;padding:12px 20px;border-radius:20px;font-size:14px;font-weight:500;opacity:0;transition:all 0.3s;z-index:300;white-space:nowrap;pointer-events:none;max-width:85vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="logo">BEN</div>
+      <div class="logo-sub">Bridging Events to New Patients</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="sync-indicator" onclick="openSettings()" id="sync-status">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">Not configured</span>
+      </div>
+      <div class="event-badge" onclick="openEventModal()" id="active-event-badge">✦ Select event</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('register')" id="tab-register">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Register
+    </button>
+    <button class="tab" onclick="switchTab('scan')" id="tab-scan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/></svg>
+      Scan
+    </button>
+    <button class="tab" onclick="switchTab('dashboard')" id="tab-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="tab" onclick="switchTab('settings')" id="tab-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- REGISTER -->
+  <div class="screen active" id="screen-register">
+    <div id="register-form-view">
+      <p class="section-title">Register participant</p>
+      <p class="section-sub">Collect their details to issue a BEN gift card.</p>
+      <div class="form-card">
+        <div class="form-card-title">Personal info</div>
+        <div class="field"><label>Full name</label><input type="text" id="f-name" placeholder="e.g. Budi Santoso" autocomplete="off"></div>
+        <div class="field"><label>Date of birth</label><input type="date" id="f-dob"></div>
+        <div class="field">
+          <label>Gender</label>
+          <div class="gender-row">
+            <button class="gender-btn" id="g-male" onclick="selectGender('Male')">Male</button>
+            <button class="gender-btn" id="g-female" onclick="selectGender('Female')">Female</button>
+            <button class="gender-btn" id="g-other" onclick="selectGender('Other')">Other</button>
+          </div>
+        </div>
+        <div class="field"><label>Phone number</label><input type="tel" id="f-phone" placeholder="e.g. 0812-3456-7890"></div>
+      </div>
+      <button class="btn-primary" onclick="submitRegistration()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Issue gift card
+      </button>
+    </div>
+
+    <div id="register-card-view" style="display:none;">
+      <p class="section-title">Gift card issued ✓</p>
+      <p class="section-sub">Have the patient save the card image to their phone, or screenshot the QR code.</p>
+
+      <div class="gift-card" id="gift-card-el">
+        <div class="gc-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M20 12v10H4V12M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+        <div class="gc-top">
+          <div><div class="gc-brand">BEN Gift Card</div><div class="gc-brand-sub">Mitra Keluarga Group</div></div>
+          <div class="gc-chip"></div>
+        </div>
+        <div class="gc-middle">
+          <div class="gc-name" id="gc-name">—</div>
+          <div class="gc-meta" id="gc-meta">—</div>
+        </div>
+        <div class="gc-bottom">
+          <div><div class="gc-id-label">Member ID</div><div class="gc-id" id="gc-id">—</div></div>
+          <div class="gc-event-wrap"><div class="gc-event-label">Event</div><div class="gc-event" id="gc-event">—</div></div>
+        </div>
+      </div>
+
+      <div class="qr-section">
+        <div id="qrcode"></div>
+        <p>Staff scan this QR when the patient arrives at the hospital to log their visit.</p>
+      </div>
+
+      <div class="download-btns">
+        <button class="dl-btn primary-dl" onclick="downloadCard()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Save card
+        </button>
+        <button class="dl-btn" onclick="shareCard()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+      </div>
+
+      <button class="btn-primary" onclick="registerAnother()">Register next participant</button>
+      <button class="btn-secondary" onclick="switchTab('dashboard')">View dashboard</button>
+    </div>
+  </div>
+
+  <!-- SCAN -->
+  <div class="screen" id="screen-scan">
+    <p class="section-title">Scan gift card</p>
+    <p class="section-sub">When a patient arrives at the hospital, scan their QR code to log their visit.</p>
+    <div class="scanner-box">
+      <div class="scan-placeholder" id="scan-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/></svg>
+        <p>Tap "Start camera" to scan a gift card QR code.</p>
+      </div>
+      <video id="scanner-video" autoplay playsinline muted style="display:none;width:100%;border-radius:18px;"></video>
+      <div class="scan-overlay" id="scan-overlay" style="display:none;">
+        <div class="scan-corner sc-tl"></div><div class="scan-corner sc-tr"></div>
+        <div class="scan-corner sc-bl"></div><div class="scan-corner sc-br"></div>
+      </div>
+    </div>
+    <button class="btn-primary" id="scan-btn" onclick="toggleScanner()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 9V6a2 2 0 0 1 2-2h3M3 15v3a2 2 0 0 0 2 2h3M21 9V6a2 2 0 0 0-2-2h-3M21 15v3a2 2 0 0 1-2 2h-3"/></svg>
+      Start camera
+    </button>
+    <div class="manual-lookup">
+      <div class="manual-lookup-title">Or enter Member ID manually</div>
+      <div class="manual-row">
+        <input type="text" id="manual-id-input" placeholder="e.g. BEN-2606-0001" style="text-transform:uppercase;">
+        <button onclick="lookupManual()">Look up</button>
+      </div>
+    </div>
+    <div class="patient-result" id="scan-result"></div>
+    <div class="not-found-box" id="scan-not-found">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E24B4A" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>No patient found with this ID.<br>They may not be registered in BEN yet.</p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="screen" id="screen-dashboard">
+    <p class="section-title">Event performance</p>
+    <p class="section-sub">Conversion from event participants to hospital patients.</p>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Registered</div><div class="stat-value teal" id="stat-registered">0</div><div class="stat-sub">total participants</div></div>
+      <div class="stat-card"><div class="stat-label">Returned</div><div class="stat-value coral" id="stat-returned">0</div><div class="stat-sub">visited hospital</div></div>
+      <div class="stat-card"><div class="stat-label">Conversion</div><div class="stat-value" id="stat-rate">—</div><div class="stat-sub">return rate</div></div>
+      <div class="stat-card"><div class="stat-label">Events</div><div class="stat-value" id="stat-events">0</div><div class="stat-sub">total events</div></div>
+    </div>
+    <div class="conversion-bar-wrap" id="conversion-bar-wrap" style="display:none;">
+      <div class="bar-label"><span>Registered</span><strong id="bar-reg-n">0</strong></div>
+      <div class="bar-track"><div class="bar-fill" id="bar-reg" style="width:100%"></div></div>
+      <div style="height:12px;"></div>
+      <div class="bar-label"><span>Returned to hospital</span><strong id="bar-ret-n">0</strong></div>
+      <div class="bar-track"><div class="bar-fill coral" id="bar-ret" style="width:0%"></div></div>
+    </div>
+    <div class="event-breakdown" id="event-breakdown" style="display:none;">
+      <div class="eb-title">By event</div>
+      <div id="eb-rows"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <p style="font-size:14px;font-weight:500;">Participants</p>
+      <div class="search-wrap" style="margin:0;width:140px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="dash-search" placeholder="Search…" oninput="renderDashboard()" style="height:36px;font-size:13px;padding-left:36px;">
+      </div>
+    </div>
+    <div class="patient-list" id="patient-list"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="screen-settings">
+    <p class="section-title">Settings</p>
+    <p class="section-sub">Connect BEN to a shared backend so all devices stay in sync.</p>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Google Sheets sync</div>
+      <div class="setup-info">
+        BEN uses a Google Apps Script as a lightweight backend — same pattern as NAVIN. All registrations and check-ins sync to a Google Sheet in real time, accessible by any device on your team.<br><br>
+        <strong>Step 1:</strong> Create a Google Sheet and note its ID from the URL.<br>
+        <strong>Step 2:</strong> Open script.google.com, paste the script below, update the Sheet ID, and deploy as a web app (execute as: Me, access: Anyone).<br>
+        <strong>Step 3:</strong> Paste the deployment URL here.
+      </div>
+      <div class="setup-field">
+        <label>Apps Script deployment URL</label>
+        <input type="text" id="sheet-url-input" placeholder="https://script.google.com/macros/s/…/exec" value="https://script.google.com/macros/s/AKfycbx4z0Qa7BgKVmX5M_-UmTcc1oXW6W0_WHRAKk0VeNoOhVJlChLXVxnVXc-YwsnJPxE3zw/exec">
+      </div>
+      <button class="btn-primary" onclick="saveSheetConfig()" style="height:44px;font-size:14px;">Save and test connection</button>
+      <button class="btn-secondary" onclick="toggleScriptInline()">View Apps Script code</button>
+      <div id="script-inline" style="display:none;margin-top:14px;">
+        <div style="position:relative;">
+          <div id="script-inline-code" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;font-family:monospace;font-size:11px;color:var(--text-primary);line-height:1.6;max-height:260px;overflow-y:auto;white-space:pre;overflow-x:auto;"></div>
+        </div>
+        <button class="btn-primary" onclick="copyScriptCode()" style="margin-top:10px;height:44px;font-size:14px;">Copy code</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Data management</div>
+      <div class="settings-row" onclick="exportCSV()">
+        Export all data as CSV
+        <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</div>
+      </div>
+      <div class="settings-row" onclick="syncNow()">
+        Pull from backend now
+        <div class="settings-row-right" id="last-sync-label">Never synced</div>
+      </div>
+      <div class="settings-row" style="color:#E24B4A;" onclick="confirmClearData()">
+        Clear all local data
+        <div class="settings-row-right" style="color:#E24B4A;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Danger</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">About</div>
+      <div class="settings-row" style="cursor:default;">BEN version<div class="settings-row-right">1.0</div></div>
+      <div class="settings-row" style="cursor:default;font-size:13px;">Bridging Events to New Patients<div class="settings-row-right"></div></div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+</div>
+
+<!-- Event Modal -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Active event</div>
+    <div class="modal-sub">All new registrations will be tagged to this event.</div>
+    <div id="event-options-list"></div>
+    <div class="event-new-field">
+      <input type="text" id="new-event-input" placeholder="New event name…">
+      <button class="btn-primary" style="width:auto;padding:0 16px;height:42px;font-size:14px;" onclick="addEvent()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+<script>
+const APPS_SCRIPT = `// BEN Backend — Google Apps Script
+// Replace YOUR_SHEET_ID with your Google Sheet ID
+// Deploy: Web App | Execute as: Me | Access: Anyone
+
+const SHEET_ID = '1ZkRjEnxu_BuQa3uunX_pvReYbEXQajH7I9oOA3orHTQ';
+
+function doGet(e) {
+  const action = e.parameter.action;
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  if (action === 'ping') return respond({ status: 'ok', time: new Date().toISOString() });
+  if (action === 'sync') return syncAll(ss);
+  return respond({ status: 'BEN backend online' });
+}
+
+function doPost(e) {
+  const data = JSON.parse(e.postData.contents);
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  if (data.action === 'register') return registerPatient(ss, data.patient);
+  if (data.action === 'checkin') return checkIn(ss, data.id);
+  return respond({ error: 'Unknown action' });
+}
+
+function registerPatient(ss, p) {
+  let sheet = ss.getSheetByName('Patients');
+  if (!sheet) {
+    sheet = ss.insertSheet('Patients');
+    sheet.appendRow(['ID','Name','DOB','Age','Gender','Phone','Event','RegisteredAt','Returned','ReturnedAt']);
+    sheet.getRange(1,1,1,10).setFontWeight('bold');
+  }
+  sheet.appendRow([p.id,p.name,p.dob,p.age,p.gender,p.phone,p.event,p.registeredAt,false,'']);
+  return respond({ success: true, id: p.id });
+}
+
+function checkIn(ss, id) {
+  const sheet = ss.getSheetByName('Patients');
+  if (!sheet) return respond({ error: 'No patients sheet found' });
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === id) {
+      const now = new Date().toISOString();
+      sheet.getRange(i+1, 9).setValue(true);
+      sheet.getRange(i+1, 10).setValue(now);
+      return respond({ success: true, returnedAt: now });
+    }
+  }
+  return respond({ error: 'Patient not found' });
+}
+
+function syncAll(ss) {
+  const sheet = ss.getSheetByName('Patients');
+  if (!sheet) return respond({ patients: [], events: [] });
+  const rows = sheet.getDataRange().getValues().slice(1);
+  const patients = rows.map(r => ({
+    id:r[0],name:r[1],dob:r[2],age:r[3],gender:r[4],
+    phone:r[5],event:r[6],registeredAt:r[7],
+    returned: r[8]===true||r[8]==='TRUE',
+    returnedAt: r[9]||null
+  }));
+  let evSheet = ss.getSheetByName('Events');
+  const events = evSheet ? evSheet.getDataRange().getValues().flat().filter(Boolean) : [];
+  return respond({ patients, events });
+}
+
+function respond(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+/* STATE */
+let db = JSON.parse(localStorage.getItem('ben_db') || '{"patients":[],"events":["Health Talk - Heart","Diabetes Screening","Women\'s Wellness Fair"]}');
+let activeEvent = localStorage.getItem('ben_active_event') || '';
+let sheetUrl = localStorage.getItem('ben_sheet_url') || 'https://script.google.com/macros/s/AKfycbx4z0Qa7BgKVmX5M_-UmTcc1oXW6W0_WHRAKk0VeNoOhVJlChLXVxnVXc-YwsnJPxE3zw/exec';
+let lastSync = localStorage.getItem('ben_last_sync') || '';
+let selectedGender = '', currentPatient = null;
+let scannerActive = false, scannerStream = null, scannerAnimFrame = null;
+let scannerCanvas, scannerCtx;
+
+function saveDb() { localStorage.setItem('ben_db', JSON.stringify(db)); }
+
+/* BACKEND */
+async function callBackend(payload) {
+  if (!sheetUrl) return null;
+  try {
+    const res = await fetch(sheetUrl, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
+    return await res.json();
+  } catch(e) { return null; }
+}
+async function callBackendGet(params) {
+  if (!sheetUrl) return null;
+  try {
+    const res = await fetch(sheetUrl + '?' + new URLSearchParams(params));
+    return await res.json();
+  } catch(e) { return null; }
+}
+function setSyncStatus(state, label) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + state;
+  document.getElementById('sync-label').textContent = label;
+}
+async function syncNow() {
+  if (!sheetUrl) { showToast('No backend configured — see Settings'); return; }
+  setSyncStatus('syncing', 'Syncing…');
+  const result = await callBackendGet({ action:'sync' });
+  if (!result) { setSyncStatus('error', 'Sync failed'); showToast('Could not reach backend'); return; }
+  if (result.patients) {
+    result.patients.forEach(remote => {
+      const local = db.patients.find(p => p.id === remote.id);
+      if (local) { if (remote.returned && !local.returned) { local.returned=true; local.returnedAt=remote.returnedAt; } }
+      else db.patients.push(remote);
+    });
+    if (result.events) result.events.forEach(e => { if(!db.events.includes(e)) db.events.push(e); });
+    saveDb();
+  }
+  const now = new Date().toLocaleTimeString('en-ID',{hour:'2-digit',minute:'2-digit'});
+  lastSync = now; localStorage.setItem('ben_last_sync', now);
+  setSyncStatus('ok', 'Synced ' + now);
+  const lsl = document.getElementById('last-sync-label');
+  if (lsl) lsl.textContent = 'Synced ' + now;
+  showToast('Synced with Google Sheets');
+}
+async function saveSheetConfig() {
+  const val = document.getElementById('sheet-url-input').value.trim();
+  if (!val || !val.startsWith('https://')) { showToast('Enter a valid HTTPS URL'); return; }
+  sheetUrl = val; localStorage.setItem('ben_sheet_url', val);
+  setSyncStatus('syncing', 'Testing…');
+  const result = await callBackendGet({ action:'ping' });
+  if (result && result.status === 'ok') {
+    setSyncStatus('ok', 'Connected');
+    showToast('Connected! Syncing data…');
+    await syncNow();
+  } else {
+    setSyncStatus('error', 'Connection failed');
+    showToast('Could not connect. Check URL and redeploy script.');
+  }
+}
+
+/* TABS */
+function switchTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (tab==='dashboard') renderDashboard();
+  if (tab!=='scan') stopScanner();
+  if (tab==='settings') {
+    document.getElementById('sheet-url-input').value = sheetUrl || '';
+    const lsl = document.getElementById('last-sync-label');
+    if (lsl) lsl.textContent = lastSync ? 'Synced '+lastSync : 'Never synced';
+  }
+}
+function openSettings() { switchTab('settings'); }
+
+/* EVENTS */
+function openEventModal() { renderEventOptions(); document.getElementById('event-modal').classList.add('open'); }
+document.getElementById('event-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+
+function renderEventOptions() {
+  document.getElementById('event-options-list').innerHTML = db.events.map(ev => `
+    <div class="event-option ${ev===activeEvent?'selected':''}" onclick="selectEvent(${JSON.stringify(ev)})">
+      <div class="event-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div><div class="event-opt-name">${ev}</div><div class="event-opt-meta">${db.patients.filter(p=>p.event===ev).length} registered</div></div>
+    </div>`).join('');
+}
+function selectEvent(ev) {
+  activeEvent = ev; localStorage.setItem('ben_active_event', ev);
+  document.getElementById('active-event-badge').textContent = '✦ '+(ev.length>16?ev.substring(0,16)+'…':ev);
+  document.getElementById('event-modal').classList.remove('open');
+  showToast('Event: '+ev);
+}
+function addEvent() {
+  const val = document.getElementById('new-event-input').value.trim();
+  if (!val) return;
+  if (db.events.includes(val)) { showToast('Event already exists'); return; }
+  db.events.push(val); saveDb();
+  document.getElementById('new-event-input').value = '';
+  selectEvent(val); renderEventOptions();
+}
+
+/* REGISTRATION */
+function selectGender(g) {
+  selectedGender = g;
+  ['Male','Female','Other'].forEach(x => document.getElementById('g-'+x.toLowerCase()).classList.toggle('selected',x===g));
+}
+function generateId() {
+  const now = new Date();
+  return `BEN-${String(now.getFullYear()).substring(2)}${String(now.getMonth()+1).padStart(2,'0')}-${String(db.patients.length+1).padStart(4,'0')}`;
+}
+async function submitRegistration() {
+  const name = document.getElementById('f-name').value.trim();
+  const dob = document.getElementById('f-dob').value;
+  const phone = document.getElementById('f-phone').value.trim();
+  if (!name) { showToast('Please enter patient name'); return; }
+  if (!dob) { showToast('Please enter date of birth'); return; }
+  if (!phone) { showToast('Please enter phone number'); return; }
+  if (!activeEvent) { showToast('Please select an event first'); openEventModal(); return; }
+  const age = Math.floor((new Date()-new Date(dob))/(365.25*24*3600*1000));
+  const id = generateId();
+  const patient = { id, name, dob, age, gender:selectedGender||'Not specified', phone, event:activeEvent, registeredAt:new Date().toISOString(), returned:false, returnedAt:null };
+  db.patients.push(patient); saveDb(); currentPatient = patient;
+  showCard(patient);
+  if (sheetUrl) {
+    setSyncStatus('syncing','Saving…');
+    const r = await callBackend({ action:'register', patient });
+    setSyncStatus(r&&r.success?'ok':'error', r&&r.success?'Saved':'Offline — local only');
+  }
+}
+function showCard(patient) {
+  document.getElementById('register-form-view').style.display = 'none';
+  document.getElementById('register-card-view').style.display = 'block';
+  document.getElementById('gc-name').textContent = patient.name;
+  document.getElementById('gc-meta').textContent = (patient.gender!=='Not specified'?patient.gender+' · ':'')+patient.age+' years old';
+  document.getElementById('gc-id').textContent = patient.id;
+  document.getElementById('gc-event').textContent = patient.event;
+  const qrDiv = document.getElementById('qrcode'); qrDiv.innerHTML = '';
+  new QRCode(qrDiv, { text:JSON.stringify({id:patient.id,name:patient.name,event:patient.event}), width:180, height:180, colorDark:'#0A5F6B', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.M });
+}
+function registerAnother() {
+  document.getElementById('register-form-view').style.display = 'block';
+  document.getElementById('register-card-view').style.display = 'none';
+  ['f-name','f-dob','f-phone'].forEach(id => document.getElementById(id).value = '');
+  selectedGender=''; currentPatient=null;
+  ['male','female','other'].forEach(g => document.getElementById('g-'+g).classList.remove('selected'));
+  document.getElementById('qrcode').innerHTML = '';
+}
+
+/* GIFT CARD DOWNLOAD */
+async function downloadCard() {
+  if (!currentPatient) return;
+  showToast('Generating card image…');
+  try {
+    const card = document.getElementById('gift-card-el');
+    const canvas = await html2canvas(card, { scale:3, useCORS:true, backgroundColor:null, logging:false });
+    const a = document.createElement('a');
+    a.download = 'BEN-'+currentPatient.id+'.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast('Card saved!');
+  } catch(e) { showToast('Download failed — try Share instead'); }
+}
+async function shareCard() {
+  if (!currentPatient) return;
+  try {
+    const card = document.getElementById('gift-card-el');
+    const canvas = await html2canvas(card, { scale:3, useCORS:true, backgroundColor:null, logging:false });
+    canvas.toBlob(async blob => {
+      if (navigator.share) {
+        try {
+          await navigator.share({ files:[new File([blob],'BEN-card.png',{type:'image/png'})], title:'BEN Gift Card' });
+        } catch { downloadCard(); }
+      } else { downloadCard(); }
+    }, 'image/png');
+  } catch { downloadCard(); }
+}
+
+/* SCANNER */
+async function toggleScanner() { scannerActive ? stopScanner() : await startScanner(); }
+async function startScanner() {
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    const video = document.getElementById('scanner-video');
+    video.srcObject = scannerStream; video.style.display = 'block';
+    document.getElementById('scan-placeholder').style.display = 'none';
+    document.getElementById('scan-overlay').style.display = 'block';
+    document.getElementById('scan-btn').innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg> Stop camera`;
+    scannerActive = true;
+    scannerCanvas = document.createElement('canvas'); scannerCtx = scannerCanvas.getContext('2d');
+    video.addEventListener('loadedmetadata', () => {
+      scannerCanvas.width = video.videoWidth; scannerCanvas.height = video.videoHeight;
+      scannerLoop(video);
+    });
+  } catch(e) { showToast('Camera access denied — use manual lookup below'); }
+}
+function scannerLoop(video) {
+  if (!scannerActive) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    scannerCtx.drawImage(video, 0, 0, scannerCanvas.width, scannerCanvas.height);
+    const id = scannerCtx.getImageData(0, 0, scannerCanvas.width, scannerCanvas.height);
+    const code = jsQR(id.data, id.width, id.height, { inversionAttempts:'dontInvert' });
+    if (code) { stopScanner(); processQRCode(code.data); return; }
+  }
+  scannerAnimFrame = requestAnimationFrame(() => scannerLoop(video));
+}
+function stopScanner() {
+  if (scannerStream) { scannerStream.getTracks().forEach(t=>t.stop()); scannerStream=null; }
+  if (scannerAnimFrame) cancelAnimationFrame(scannerAnimFrame);
+  scannerActive = false;
+  document.getElementById('scanner-video').style.display = 'none';
+  document.getElementById('scan-placeholder').style.display = 'flex';
+  document.getElementById('scan-overlay').style.display = 'none';
+  document.getElementById('scan-btn').innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 9V6a2 2 0 0 1 2-2h3M3 15v3a2 2 0 0 0 2 2h3M21 9V6a2 2 0 0 0-2-2h-3M21 15v3a2 2 0 0 1-2 2h-3"/></svg> Start camera`;
+}
+function processQRCode(data) {
+  try { lookupPatient(JSON.parse(data).id); } catch { lookupPatient(data); }
+}
+function lookupManual() {
+  const val = document.getElementById('manual-id-input').value.trim().toUpperCase();
+  if (val) lookupPatient(val);
+}
+async function lookupPatient(id) {
+  document.getElementById('scan-result').classList.remove('visible');
+  document.getElementById('scan-not-found').classList.remove('visible');
+  let patient = db.patients.find(p => p.id===id||p.id===id.toUpperCase());
+  if (!patient && sheetUrl) { await syncNow(); patient = db.patients.find(p => p.id===id||p.id===id.toUpperCase()); }
+  if (!patient) { document.getElementById('scan-not-found').classList.add('visible'); return; }
+  const wasReturned = patient.returned;
+  if (!patient.returned) {
+    patient.returned=true; patient.returnedAt=new Date().toISOString(); saveDb();
+    if (sheetUrl) {
+      setSyncStatus('syncing','Saving…');
+      const r = await callBackend({ action:'checkin', id:patient.id });
+      setSyncStatus(r&&r.success?'ok':'error', r&&r.success?'Saved':'Offline — local only');
+    }
+  }
+  const ini = patient.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const regD = new Date(patient.registeredAt).toLocaleDateString('en-ID',{day:'numeric',month:'short',year:'numeric'});
+  const retD = new Date(patient.returnedAt).toLocaleDateString('en-ID',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('scan-result').innerHTML = `
+    <div class="success-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>${!wasReturned?'First hospital visit recorded!':'Patient verified'}</div>
+    <div class="result-header"><div class="result-avatar">${ini}</div><div><div class="result-name">${patient.name}</div><div class="result-meta">${patient.gender} · ${patient.age} yrs · ${patient.phone}</div></div></div>
+    <div class="result-row"><span>Member ID</span><span>${patient.id}</span></div>
+    <div class="result-row"><span>Event</span><span>${patient.event}</span></div>
+    <div class="result-row"><span>Registered</span><span>${regD}</span></div>
+    <div class="result-row"><span>Hospital visit</span><span>${retD}</span></div>`;
+  document.getElementById('scan-result').classList.add('visible');
+  if (!wasReturned) showToast('Visit logged for '+patient.name.split(' ')[0]);
+}
+
+/* DASHBOARD */
+function renderDashboard() {
+  const total = db.patients.length;
+  const returned = db.patients.filter(p=>p.returned).length;
+  const rate = total>0 ? Math.round(returned/total*100) : 0;
+  document.getElementById('stat-registered').textContent = total;
+  document.getElementById('stat-returned').textContent = returned;
+  document.getElementById('stat-rate').textContent = total>0 ? rate+'%' : '—';
+  document.getElementById('stat-events').textContent = db.events.length;
+  const bw = document.getElementById('conversion-bar-wrap');
+  if (total>0) {
+    bw.style.display='block';
+    document.getElementById('bar-reg-n').textContent = total;
+    document.getElementById('bar-ret-n').textContent = returned;
+    document.getElementById('bar-reg').style.width = '100%';
+    document.getElementById('bar-ret').style.width = (returned/total*100)+'%';
+  } else bw.style.display='none';
+
+  const eventNames = [...new Set(db.patients.map(p=>p.event))];
+  const eb = document.getElementById('event-breakdown');
+  if (eventNames.length>1) {
+    eb.style.display='block';
+    document.getElementById('eb-rows').innerHTML = eventNames.map(ev => {
+      const evT = db.patients.filter(p=>p.event===ev).length;
+      const evR = db.patients.filter(p=>p.event===ev&&p.returned).length;
+      const evRate = evT>0 ? Math.round(evR/evT*100) : 0;
+      return `<div class="eb-row"><div class="eb-name">${ev}</div><div class="eb-nums">${evR}/${evT}</div><div class="eb-track"><div class="eb-fill" style="width:${evRate}%"></div></div></div>`;
+    }).join('');
+  } else eb.style.display='none';
+
+  const search = (document.getElementById('dash-search').value||'').toLowerCase();
+  const filtered = db.patients
+    .filter(p => !search||p.name.toLowerCase().includes(search)||p.id.toLowerCase().includes(search)||p.event.toLowerCase().includes(search))
+    .sort((a,b)=>new Date(b.registeredAt)-new Date(a.registeredAt));
+  const list = document.getElementById('patient-list');
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>${total===0?'No participants yet.\nRegister your first participant.':'No results found.'}</p></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(p => {
+    const ini = p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const date = new Date(p.registeredAt).toLocaleDateString('en-ID',{day:'numeric',month:'short'});
+    return `<div class="patient-item"><div class="p-avatar ${p.returned?'returned':''}">${ini}</div><div style="flex:1;min-width:0;"><div class="p-name">${p.name}</div><div class="p-meta">${p.event} · ${date}</div></div><span class="p-badge ${p.returned?'returned':'registered'}">${p.returned?'Returned':'Registered'}</span></div>`;
+  }).join('');
+}
+
+/* DATA */
+function exportCSV() {
+  if (!db.patients.length) { showToast('No data to export yet'); return; }
+  const headers = ['ID','Name','DOB','Age','Gender','Phone','Event','Registered At','Returned','Return Date'];
+  const rows = db.patients.map(p => [p.id,p.name,p.dob,p.age,p.gender,p.phone,p.event,p.registeredAt,p.returned?'Yes':'No',p.returnedAt||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
+  const blob = new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='BEN-data-'+new Date().toISOString().substring(0,10)+'.csv'; a.click();
+  showToast('CSV exported');
+}
+function confirmClearData() {
+  if (confirm('Delete all local participant data? Backend data will not be affected.')) {
+    db.patients=[]; saveDb(); showToast('Local data cleared'); renderDashboard();
+  }
+}
+
+/* SCRIPT MODAL */
+function toggleScriptInline() {
+  var el = document.getElementById('script-inline');
+  var code = document.getElementById('script-inline-code');
+  if (el.style.display === 'none') {
+    code.textContent = APPS_SCRIPT;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+function copyScriptCode() {
+  navigator.clipboard.writeText(APPS_SCRIPT).then(()=>showToast('Code copied!')).catch(()=>showToast('Manually select and copy the code'));
+}
+
+/* TOAST */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+/* INIT */
+if (activeEvent) document.getElementById('active-event-badge').textContent = '✦ '+(activeEvent.length>16?activeEvent.substring(0,16)+'…':activeEvent);
+if (!localStorage.getItem('ben_sheet_url')) { localStorage.setItem('ben_sheet_url', 'https://script.google.com/macros/s/AKfycbx4z0Qa7BgKVmX5M_-UmTcc1oXW6W0_WHRAKk0VeNoOhVJlChLXVxnVXc-YwsnJPxE3zw/exec'); }
+if (sheetUrl) setSyncStatus('ok','Configured');
+</script>
+</body>
+</html>
