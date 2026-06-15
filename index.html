@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BEN — Bridging Events to New Patients</title>
+<title>BEN — Bridging Engagement Nexus</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -25,8 +25,8 @@ html,body{height:100%;background:var(--surface);font-family:'Inter',sans-serif;c
 /* Header */
 .header{background:var(--teal);padding:16px 20px 14px;position:sticky;top:0;z-index:100}
 .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.logo{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:white;letter-spacing:-0.5px}
-.logo-sub{font-size:10px;color:rgba(255,255,255,0.5);font-weight:400;letter-spacing:0.3px;margin-top:1px}
+.logo{line-height:1}
+.logo-sub{display:none}
 .sync-indicator{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.7);cursor:pointer}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);transition:background 0.3s}
 .sync-dot.ok{background:#4ADE80}.sync-dot.syncing{background:#FCD34D;animation:pulse 1s infinite}.sync-dot.error{background:#F87171}
@@ -204,8 +204,7 @@ input::placeholder{color:var(--text-muted)}
 <div class="header">
   <div class="header-top">
     <div>
-      <div class="logo">BEN</div>
-      <div class="logo-sub">Bridging Events to New Patients</div>
+      <div class="logo"><span style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:white;letter-spacing:-0.5px">B</span><span style="font-family:'Sora',sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.8);letter-spacing:0.1px">ridging </span><span style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:white;letter-spacing:-0.5px">E</span><span style="font-family:'Sora',sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.8);letter-spacing:0.1px">ngagement </span><span style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:white;letter-spacing:-0.5px">N</span><span style="font-family:'Sora',sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.8);letter-spacing:0.1px">exus</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div class="sync-indicator" onclick="openSettings()" id="sync-status">
@@ -269,7 +268,7 @@ input::placeholder{color:var(--text-muted)}
       <div class="gift-card" id="gift-card-el">
         <div class="gc-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M20 12v10H4V12M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
         <div class="gc-top">
-          <div><div class="gc-brand">BEN Gift Card</div><div class="gc-brand-sub">Mitra Keluarga Group</div></div>
+          <div><div class="gc-brand">BEN Gift Card</div><div class="gc-brand-sub">Mayapada Hospital</div></div>
           <div class="gc-chip"></div>
         </div>
         <div class="gc-middle">
@@ -297,6 +296,11 @@ input::placeholder{color:var(--text-muted)}
           Share
         </button>
       </div>
+
+      <button class="btn-primary" style="background:#25D366; margin-bottom:10px;" onclick="sendWhatsApp()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        Send via WhatsApp
+      </button>
 
       <button class="btn-primary" onclick="registerAnother()">Register next participant</button>
       <button class="btn-secondary" onclick="switchTab('dashboard')">View dashboard</button>
@@ -375,7 +379,7 @@ input::placeholder{color:var(--text-muted)}
     <div class="settings-section">
       <div class="settings-section-title">Google Sheets sync</div>
       <div class="setup-info">
-        BEN uses a Google Apps Script as a lightweight backend — same pattern as NAVIN. All registrations and check-ins sync to a Google Sheet in real time, accessible by any device on your team.<br><br>
+        BEN (Bridging Engagement Nexus) uses a Google Apps Script as a lightweight backend — same pattern as NAVIN. All registrations and check-ins sync to a Google Sheet in real time, accessible by any device on your team.<br><br>
         <strong>Step 1:</strong> Create a Google Sheet and note its ID from the URL.<br>
         <strong>Step 2:</strong> Open script.google.com, paste the script below, update the Sheet ID, and deploy as a web app (execute as: Me, access: Anyone).<br>
         <strong>Step 3:</strong> Paste the deployment URL here.
@@ -413,7 +417,7 @@ input::placeholder{color:var(--text-muted)}
     <div class="settings-section">
       <div class="settings-section-title">About</div>
       <div class="settings-row" style="cursor:default;">BEN version<div class="settings-row-right">1.0</div></div>
-      <div class="settings-row" style="cursor:default;font-size:13px;">Bridging Events to New Patients<div class="settings-row-right"></div></div>
+      <div class="settings-row" style="cursor:default;font-size:13px;">Bridging Engagement Nexus<div class="settings-row-right"></div></div>
     </div>
   </div>
 
@@ -690,6 +694,31 @@ async function shareCard() {
       } else { downloadCard(); }
     }, 'image/png');
   } catch { downloadCard(); }
+}
+
+/* WHATSAPP */
+function sendWhatsApp() {
+  if (!currentPatient) return;
+  const p = currentPatient;
+
+  // Clean phone: strip spaces, dashes, dots. Convert leading 0 to 62 (Indonesia)
+  let phone = p.phone.replace(/[\s\-\.\(\)]/g, '');
+  if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+  if (phone.startsWith('+')) phone = phone.substring(1);
+
+  const msg =
+    `Halo ${p.name}! 👋\n\n` +
+    `Terima kasih telah hadir di *${p.event}*.\n\n` +
+    `Berikut detail kartu hadiah BEN Anda:\n` +
+    `• Nama: *${p.name}*\n` +
+    `• Member ID: *${p.id}*\n` +
+    `• Tanggal daftar: *${new Date(p.registeredAt).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}*\n\n` +
+    `Tunjukkan Member ID ini saat berkunjung ke Mayapada Hospital untuk tercatat sebagai pasien.\n\n` +
+    `Salam sehat,\n*Tim Mayapada Hospital*`;
+
+  const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+  showToast('Opening WhatsApp for ' + p.name.split(' ')[0] + '…');
 }
 
 /* SCANNER */
